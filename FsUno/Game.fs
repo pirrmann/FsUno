@@ -67,7 +67,7 @@ type Turn = (*player*)int * (*playerCount*)int
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Turn =
-    let empty = (0,1)
+    let empty = (0, 1)
     let start count = (0, count)
     let next (player, count) = (player + 1) % count, count
     let isNot p (current, _) = p <> current
@@ -94,7 +94,7 @@ type State = {
     static member initial = {
         GameAlreadyStarted = false
         Player = Turn.empty
-        TopCard = Digit(0,Red) }
+        TopCard = Digit(0, Red) }
 
 
 

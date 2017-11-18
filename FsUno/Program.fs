@@ -2,13 +2,18 @@
 open Game
 open CommandHandlers
 
-//open ToyInMemoryEventStore
+// uncomment to use the toy in-memory event store
+open ToyInMemoryEventStore
 
 // uncomment to use async agent version (against the event store)
-// open Async
+//open Async
+//let readStream store streamId version count =
+//    async { return readStream store streamId version count }
+//let appendToStream store streamId expectedVersion newEvents =
+//    async { return appendToStream store streamId expectedVersion newEvents }
 
 // uncomment to use the EventStore
- open EventStore
+//open EventStore
 
 
 [<EntryPoint>]

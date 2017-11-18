@@ -1,10 +1,11 @@
+RESTRICTION: == net46
 NUGET
-  remote: http://nuget.org/api/v2
-  specs:
-    EventStore.Client (3.0.0)
-    FsUnit.xUnit (1.3.0.1)
-      xunit (>= 1.9.1, <  3.0)
-      xunit (>= 1.9.1, <  3.0)
-      xunit (>= 1.9.1, <  3.0)
+  remote: http://www.nuget.org/api/v2
+    EventStore.Client (3.0)
+    FSharp.Core (4.2.3)
     Newtonsoft.Json (6.0.5)
-    xunit (1.9.2)
+    NUnit (2.6.4)
+    NUnit.Runners (2.6.4)
+GITHUB
+  remote: forki/FsUnit
+    FsUnit.fs (f536bd5ed0eba8b38d2b01ae79d64e4e14fbd0a6)

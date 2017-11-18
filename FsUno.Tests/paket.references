@@ -1,2 +1,3 @@
-FsUnit.xUnit
-xunit
+FSharp.Core
+NUnit
+File:FsUnit.fs .

@@ -7,7 +7,7 @@ type GameId = GameId of int
 /// Commands for the game discard pile
 type Command =
     | StartGame of StartGame
-    | PlayCard of PlayCard 
+    | PlayCard of PlayCard
 
 and StartGame = {
     GameId: GameId
@@ -33,8 +33,8 @@ and PlayCard = {
 
 /// Events for the game discard pile
 type Event =
-    | GameStarted of GameStarted 
-    | CardPlayed of CardPlayed 
+    | GameStarted of GameStarted
+    | CardPlayed of CardPlayed
 
 and GameStarted = {
     GameId: GameId
@@ -84,7 +84,7 @@ module Turn =
 
 
 
-    
+
 
 type State = {
     GameAlreadyStarted: bool
@@ -160,8 +160,8 @@ let playCard (command: PlayCard) state =
 
 let handle =
     function
-    | StartGame command -> startGame command 
-    | PlayCard command -> playCard command 
+    | StartGame command -> startGame command
+    | PlayCard command -> playCard command
 
 
 
@@ -180,14 +180,14 @@ let handle =
 
 let evolve state =
     function
-    | GameStarted e -> 
+    | GameStarted e ->
         { GameAlreadyStarted = true
           Player = Turn.start e.PlayerCount
           TopCard = e.FirstCard }
 
     | CardPlayed e ->
         { state with
-            Player = state.Player |> Turn.next 
+            Player = state.Player |> Turn.next
             TopCard = e.Card }
 
 

@@ -2,7 +2,7 @@
 
 
 // This module provides Json serialization to store
-// events in the event store 
+// events in the event store
 
 // It is based on Json.net but provides
 // a specialization for cleaner F# type serialization
@@ -15,24 +15,24 @@ open Newtonsoft.Json.Linq
 open Microsoft.FSharp.Reflection
 
 // Basic reflection for converters
-module private Reflection = 
-    let isGeneric td (t:Type) = 
+module private Reflection =
+    let isGeneric td (t:Type) =
         t.IsGenericType && t.GetGenericTypeDefinition() = td
-        
+
     let isList t = isGeneric typedefof<List<_>> t
     let isOption t = isGeneric typedefof<Option<_>> t
 
     let propertyName (case: PropertyInfo) = case.Name
 
-    let (|NamedCase|UnionCase|SingleCase|) v =            
+    let (|NamedCase|UnionCase|SingleCase|) v =
         let t = v.GetType()
         match FSharpValue.GetUnionFields(v, t) with
         | case, [||] -> NamedCase case.Name
-        | case, values -> 
+        | case, values ->
             let names =
-                case.GetFields() 
+                case.GetFields()
                 |> Seq.map propertyName
-            let values = Seq.zip names values |> Seq.toList 
+            let values = Seq.zip names values |> Seq.toList
             match values with
             | [ value ] when FSharpType.GetUnionCases(t).Length = 1 ->
                 SingleCase(case.Name, value)
@@ -56,16 +56,16 @@ module private Reflection =
         |> Seq.filter hasOneProperty
 
 
-    // Json function used by converters
-module private Json =    
+// Json module used by converters
+module private Json =
     let writeObject (w: JsonWriter) (s: JsonSerializer) properties =
-        let writeProperty (name, value) = 
+        let writeProperty (name, value) =
             w.WritePropertyName(name)
             s.Serialize(w, value)
         w.WriteStartObject()
         List.iter writeProperty properties
-        w.WriteEndObject() 
-    
+        w.WriteEndObject()
+
     let read (r: JsonReader) = r.Read() |> ignore
 
     let deserializeField (r: JsonReader) (s:JsonSerializer) case =
@@ -92,7 +92,7 @@ module private Json =
             read r
             let case = getCase r true
 
-            
+
             let deserializeField = case |> deserializeField r s
 
             let rec loop values =
@@ -145,7 +145,7 @@ let private rootUnionConverter<'a> (case: UnionCaseInfo) =
         member this.WriteJson(w,v,s) =
             match v with
             | NamedCase _ -> ()
-            | SingleCase(_, (_,value)) -> s.Serialize(w, value)           
+            | SingleCase(_, (_,value)) -> s.Serialize(w, value)
             | UnionCase(_, fields) ->
                 fields
                 |> Json.writeObject w s
@@ -159,7 +159,7 @@ let private rootUnionConverter<'a> (case: UnionCaseInfo) =
 // This converter writes options as value or null
 let private optionConverter =
     { new JsonConverter() with
-        member this.WriteJson(w,v,s) = 
+        member this.WriteJson(w,v,s) =
             match FSharpValue.GetUnionFields(v,v.GetType()) with
             | _, [|v|] -> s.Serialize(w, v)
             | _ -> w.WriteNull()
@@ -170,12 +170,12 @@ let private optionConverter =
                 | [|o|] -> o
                 | _ -> failwith "Option should have a single generic argument"
             let cases = FSharpType.GetUnionCases(t)
-            
+
             if r.TokenType = JsonToken.Null then
                 FSharpValue.MakeUnion(cases.[0], null)
             else
                 FSharpValue.MakeUnion(cases.[1], [| s.Deserialize(r,optionType) |])
-                                
+
         member this.CanConvert t = isOption t }
 
 /// Serializes a value type containing a single property
@@ -202,15 +202,15 @@ let converters =
     [ unionConverter;optionConverter]
     @ valueConverters
 
-let deserializeUnion<'a> eventType data = 
+let deserializeUnion<'a> eventType data =
     FSharpType.GetUnionCases(typeof<'a>)
     |> Array.tryFind (fun c -> c.Name = eventType)
     |> function
-       | Some case ->  
+       | Some case ->
             let serializer = new JsonSerializer()
             rootUnionConverter<'a> case :: converters
             |> List.iter serializer.Converters.Add
-            
+
             use stream = new IO.MemoryStream(data: byte[])
             use reader = new JsonTextReader(new IO.StreamReader(stream))
             serializer.Deserialize<'a>(reader)

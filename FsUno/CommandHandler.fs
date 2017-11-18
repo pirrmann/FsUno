@@ -17,7 +17,7 @@ module Game =
     let create readStream appendToStream =
 
         // this is the "repository"
-        let streamId gameId = sprintf "Game-%d" gameId 
+        let streamId gameId = sprintf "Game-%d" gameId
         let load gameId =
             let rec fold state version =
                 let events, lastEvent, nextEvent = readStream (streamId gameId) version 500
@@ -31,7 +31,7 @@ module Game =
 
         // the mapsnd function works on a pair.
         // It applies the function on the second element.
-        let inline mapsnd f (v,s) = v, f s    
+        let inline mapsnd f (v,s) = v, f s
 
         fun command ->
             let id = gameId command
@@ -55,11 +55,11 @@ module Async =
         let create readStream appendToStream =
 
             // this is the "repository"
-            let streamId gameId = sprintf "Game-%d" gameId 
+            let streamId gameId = sprintf "Game-%d" gameId
             let load gameId =
                 let rec fold state version =
                     async {
-                    let! events, lastEvent, nextEvent = 
+                    let! events, lastEvent, nextEvent =
                         readStream (streamId gameId) version 500
 
                     let state = List.fold evolve state events
@@ -68,7 +68,7 @@ module Async =
                     | Some n -> return! fold state n }
                 fold State.initial 0
 
-            let save gameId expectedVersion events = 
+            let save gameId expectedVersion events =
                 appendToStream (streamId gameId) expectedVersion events
 
             let start gameId =
@@ -95,7 +95,7 @@ module Async =
                             let! command = inbox.Receive()
                             let id = gameId command
                             match Map.tryFind id aggregates with
-                            | Some aggregate -> 
+                            | Some aggregate ->
                                 forward aggregate command
                                 return! loop aggregates
                             | None ->
@@ -104,6 +104,5 @@ module Async =
                                 return! loop (Map.add id aggregate aggregates) }
                     loop Map.empty
 
-            fun command -> 
+            fun command ->
                 dispatcher.Post command
-        

@@ -2,7 +2,7 @@
 module Deck
 
 
-type Color = 
+type Color =
     | Red
     | Green
     | Blue

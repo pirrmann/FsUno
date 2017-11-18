@@ -1,7 +1,7 @@
 ﻿[<AutoOpen>]
 module Specifications
 
-open FsUnit.Xunit
+open FsUnit
 open Game
 
 let Given (events: Event list) = events
@@ -14,9 +14,9 @@ let Expect (expected: Event list) (events, command) =
     events
     |> List.fold evolve State.initial
     |> handle command
-    |> should equal expected
+    |> shouldEqual expected
 
-let ExpectThrows<'Ex> (events, command) =
+let ExpectThrows<'Ex when 'Ex :> exn> (events, command) =
     printGiven events
     printWhen command
     printExpectThrows typeof<'Ex>
@@ -27,5 +27,5 @@ let ExpectThrows<'Ex> (events, command) =
         |> List.fold evolve State.initial
         |> handle command
         |> ignore)
-    |> should throw typeof<'Ex>
+    |> shouldFail<'Ex>
 

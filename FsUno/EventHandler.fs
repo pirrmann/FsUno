@@ -9,7 +9,7 @@ type EventHandler() =
     let gameId = function GameId id -> id
 
     let setColor card =
-        let color = 
+        let color =
             match card with
             | Digit(_, c) -> Some c
             | KickBack c -> Some c
@@ -20,7 +20,7 @@ type EventHandler() =
                | Some Yellow -> ConsoleColor.Yellow
                | None -> ConsoleColor.White
         Console.ForegroundColor <- color
-    
+
     member this.Handle =
         function
         | GameStarted e ->

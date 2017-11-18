@@ -1,10 +1,10 @@
 ﻿module FsUno.Tests.``When playing card``
 
-open Xunit
+open NUnit.Framework
 open System
 open Game
 
-[<Fact>]
+[<Test>]
 let ``Same color should be accepted``() =
     Given [ GameStarted{ GameId = GameId 1; PlayerCount = 4; FirstCard = Digit(3, Red)} ]
     |> When ( PlayCard{ GameId = GameId 1; Player = 0; Card = Digit(9, Red)} )
@@ -24,7 +24,7 @@ let ``Same color should be accepted``() =
 
 
 
-[<Fact>]
+[<Test>]
 let ``Same value should be accepted``() =
     Given [ GameStarted{ GameId = GameId 1; PlayerCount = 4; FirstCard = Digit(3, Red)} ]
     |> When ( PlayCard{ GameId = GameId 1; Player = 0; Card = Digit(3, Yellow)} )
@@ -33,13 +33,13 @@ let ``Same value should be accepted``() =
 
 
 
-[<Fact>]
+[<Test>]
 let ``Different value and color should be rejected``() =
     Given [ GameStarted{ GameId = GameId 1; PlayerCount = 4; FirstCard = Digit(3, Red)} ]
     |> When ( PlayCard{ GameId = GameId 1; Player = 0; Card = Digit(8, Yellow)} )
     |> ExpectThrows<InvalidOperationException>
 
-[<Fact>]
+[<Test>]
 let ``First player should play at his turn``() =
     Given [ GameStarted{ GameId = GameId 1; PlayerCount = 4; FirstCard = Digit(3, Red)} ]
     |> When ( PlayCard{ GameId = GameId 1; Player = 2; Card = Digit(3, Green)} )

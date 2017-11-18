@@ -9,45 +9,45 @@ exception WrongExpectedVersion
 // This is a *TOY* implementation of an in memory version of an eventstore
 // The presence here is just to be able to run the sample without
 // runing an external event store.
-// 
+//
 // For a production ready implementation, see the EventStore module below
 module ToyInMemoryEventStore =
     type Stream = { mutable Events:  (Event * int) list }
         with
-        static member version stream = 
+        static member version stream =
             stream.Events
             |> Seq.last
             |> snd
-    
 
-    type InMemoryEventStore = 
-        { mutable streams : Map<string,Stream> 
+
+    type InMemoryEventStore =
+        { mutable streams : Map<string,Stream>
           projection : Event -> unit }
 
         interface IDisposable
-            with member x.Dispose() = ()         
+            with member x.Dispose() = ()
 
     let create() = { streams = Map.empty
                      projection = fun _ -> () }
     let subscribe projection store =
-        { store with projection = projection} 
+        { store with projection = projection}
 
     let readStream store streamId version count =
         match store.streams.TryFind streamId with
-        | Some(stream) -> 
+        | Some(stream) ->
             let events =
                 stream.Events
                 |> Seq.skipWhile (fun (_,v) -> v < version )
                 |> Seq.takeWhile (fun (_,v) -> v <= version + count)
-                |> Seq.toList 
-            let lastEventNumber = events |> Seq.last |> snd 
-            
+                |> Seq.toList
+            let lastEventNumber = events |> Seq.last |> snd
+
             events |> List.map fst,
                 lastEventNumber ,
-                if lastEventNumber < version + count 
-                then None 
+                if lastEventNumber < version + count
+                then None
                 else Some (lastEventNumber+1)
-            
+
         | None -> [], -1, None
 
     let appendToStream store streamId expectedVersion newEvents =
@@ -56,14 +56,14 @@ module ToyInMemoryEventStore =
             |> List.mapi (fun index event -> (event, expectedVersion + index + 1))
 
         match store.streams.TryFind streamId with
-        | Some stream when Stream.version stream = expectedVersion -> 
+        | Some stream when Stream.version stream = expectedVersion ->
             stream.Events <- stream.Events @ eventsWithVersion
-        
-        | None when expectedVersion = -1 -> 
-            store.streams <- store.streams.Add(streamId, { Events = eventsWithVersion })        
 
-        | _ -> raise WrongExpectedVersion 
-        
+        | None when expectedVersion = -1 ->
+            store.streams <- store.streams.Add(streamId, { Events = eventsWithVersion })
+
+        | _ -> raise WrongExpectedVersion
+
         newEvents
         |> Seq.iter store.projection
 
@@ -80,7 +80,7 @@ module AsyncExtensions =
 
         static member AwaitTask (t: Task) =
             let tcs = new TaskCompletionSource<unit>(TaskContinuationOptions.None)
-            t.ContinueWith((fun _ -> 
+            t.ContinueWith((fun _ ->
                 if t.IsFaulted then tcs.SetException t.Exception
                 elif t.IsCanceled then tcs.SetCanceled()
                 else tcs.SetResult(())), TaskContinuationOptions.ExecuteSynchronously) |> ignore
@@ -88,7 +88,7 @@ module AsyncExtensions =
                 try
                     do! Async.AwaitTask tcs.Task
                 with
-                | :? AggregateException as ex -> 
+                | :? AggregateException as ex ->
                     do! Async.Raise (ex.Flatten().InnerExceptions |> Seq.head) }
 
     open EventStore.ClientAPI
@@ -112,11 +112,11 @@ module EventStore =
     open EventStore.ClientAPI
     open Serialization
     let deserialize (event: ResolvedEvent) = deserializeUnion event.Event.EventType event.Event.Data
-    let serialize event = 
+    let serialize event =
         let typeName, data = serializeUnion event
         EventData(Guid.NewGuid(), typeName, true, data, null)
 
-    let create() = 
+    let create() =
         let s = EventStoreConnection.Create(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 1113))
         s.AsyncConnect() |> Async.RunSynchronously
         s
@@ -131,14 +131,14 @@ module EventStore =
         async {
             let! slice = Async.AwaitTask <| store.ReadStreamEventsForwardAsync(streamId, version, count, true)
 
-            let events = 
-                slice.Events 
+            let events =
+                slice.Events
                 |> Seq.choose deserialize
                 |> Seq.toList
-            
-            let nextEventNumber = 
-                if slice.IsEndOfStream 
-                then None 
+
+            let nextEventNumber =
+                if slice.IsEndOfStream
+                then None
                 else Some slice.NextEventNumber
 
             return events, slice.LastEventNumber, nextEventNumber }
@@ -154,7 +154,7 @@ module EventStore =
 
 // This module uses a production ready event store
 // This version use the async API
-module Async = 
+module Async =
     module EventStore =
         open System
         open System.Net
@@ -162,27 +162,27 @@ module Async =
         open Serialization
 
 
-        let create = EventStore.create 
+        let create = EventStore.create
 
         let subscribe = EventStore.subscribe
-        
-        let readStream (store: IEventStoreConnection) streamId version count = 
+
+        let readStream (store: IEventStoreConnection) streamId version count =
             async {
                 let! slice = store.AsyncReadStreamEventsForward streamId version count true
 
-                let events = 
-                    slice.Events 
+                let events =
+                    slice.Events
                     |> Seq.choose EventStore.deserialize
                     |> Seq.toList
-                
-                let nextEventNumber = 
-                    if slice.IsEndOfStream 
-                    then None 
+
+                let nextEventNumber =
+                    if slice.IsEndOfStream
+                    then None
                     else Some slice.NextEventNumber
 
                 return events, slice.LastEventNumber, nextEventNumber }
 
-        let appendToStream (store: IEventStoreConnection) streamId expectedVersion newEvents = 
+        let appendToStream (store: IEventStoreConnection) streamId expectedVersion newEvents =
             async {
                 let serializedEvents = [| for event in newEvents -> EventStore.serialize event |]
 
